@@ -106,33 +106,39 @@ public class CreateChatFragment extends Fragment {
             }
         });
 
-        //Create room chat
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
-        DocumentReference docRef = db.collection("RoomChat").document();
-        roomchat.setRoomId(docRef.getId());
-        roomchat.userIds.add(FirebaseAuth.getInstance().getUid());
-        roomchat.userIds.add(id);
-        roomchat.userNames.add(FirebaseAuth.getInstance().getCurrentUser().getDisplayName());
-        roomchat.userNames.add(name);
 
-        docRef.set(roomchat).addOnCompleteListener(new OnCompleteListener<Void>() {
-            @Override
-            public void onComplete(@NonNull Task<Void> task) {
-                if(task.isSuccessful()){
-                } else {
-                }
-            }
-        });
 
         //Send chat
         binding.buttonSubmit.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
 
+
+
                 //Message content
                 binding.editTextMessage.getText().toString();
 
-                DocumentReference docRefMess = db.collection("RoomChat").document(roomchat.getRoomId())
+
+                //Create room chat
+                FirebaseFirestore db = FirebaseFirestore.getInstance();
+                DocumentReference docRef = db.collection("RoomChat").document();
+                String roomId = docRef.getId();
+                roomchat.setRoomId(roomId);
+                roomchat.userIds.add(FirebaseAuth.getInstance().getUid());
+                roomchat.userIds.add(id);
+                roomchat.userNames.add(FirebaseAuth.getInstance().getCurrentUser().getDisplayName());
+                roomchat.userNames.add(name);
+
+                docRef.set(roomchat).addOnCompleteListener(new OnCompleteListener<Void>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Void> task) {
+                        if(task.isSuccessful()){
+                        } else {
+                        }
+                    }
+                });
+
+                DocumentReference docRefMess = db.collection("RoomChat").document(roomId)
                         .collection("Message").document();
                 message.setMessageID(docRefMess.getId());
                 message.setCreatorID(FirebaseAuth.getInstance().getCurrentUser().getUid());
@@ -178,7 +184,7 @@ public class CreateChatFragment extends Fragment {
         adapter = new CreateChatFragmentRecyclerAdapter(userList);
         binding.recyclerView.setAdapter(adapter);
 
-
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
         db.collection("Users")
                 .addSnapshotListener(new EventListener<QuerySnapshot>() {
                     @Override
@@ -216,6 +222,15 @@ public class CreateChatFragment extends Fragment {
             User user = users.get(position);
             holder.userTextView.setText(user.userName);
             holder.user = user;
+
+
+            //Set online
+            if (user.status==true){
+                holder.onlineImageView.setVisibility(View.VISIBLE);
+            }
+            else{
+                holder.onlineImageView.setVisibility(View.INVISIBLE);
+            }
 
         }
 

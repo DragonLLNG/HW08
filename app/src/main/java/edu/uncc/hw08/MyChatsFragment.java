@@ -98,24 +98,28 @@ public class MyChatsFragment extends Fragment {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
 
-        //.orderBy("createdAt", descending: true).limit(1)
+        db.collection("RoomChat").whereArrayContains("userIDs",user.getUid());
 
-        db.collection("Users").document(user.getUid())
-                .collection("Message List")
+        db.collection("RoomChat").document(user.getUid())
+                .collection("Message")
                 .addSnapshotListener(new EventListener<QuerySnapshot>() {
                     @Override
                     public void onEvent(@Nullable QuerySnapshot value, @Nullable FirebaseFirestoreException error) {
                         messageArrayList.clear();
                         for(QueryDocumentSnapshot messageDoc : value) {
                             Message message = messageDoc.toObject(Message.class);
-                            if (message.creatorID.equals(user.getUid()) || message.receiverID.equals(user.getUid()))
-                            {
+//                            if (message.creatorID.equals(user.getUid()) || message.receiverID.equals(user.getUid()))
+//                            {
                                 messageArrayList.add(message);
-                            }
+                            //}
                         }
                         adapter.notifyDataSetChanged();
-                    }
-                });
+                }
+        });
+
+
+        //.orderBy("createdAt", descending: true).limit(1)
+
     }
 
 
