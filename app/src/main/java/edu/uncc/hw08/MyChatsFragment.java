@@ -145,8 +145,14 @@ public class MyChatsFragment extends Fragment {
         public void onBindViewHolder(@NonNull MessageViewHolder holder, int position) {
             Roomchat roomchat = roomchats.get(position);
             Log.d("test", "onBindViewHolder: "+ roomchat.message);
-            holder.messageBy.setText(roomchat.message.receiver);
-            holder.messageBy.setText(roomchat.message.creator);
+
+            FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+            if (user.getDisplayName().equals(roomchat.userNames.get(0))) {
+                holder.messageBy.setText(roomchat.message.receiver);
+            }
+            else { holder.messageBy.setText(roomchat.message.creator); }
+
+
             holder.messageText.setText(roomchat.message.message);
             holder.messageOn.setText(roomchat.message.date);
             holder.roomchat = roomchat;

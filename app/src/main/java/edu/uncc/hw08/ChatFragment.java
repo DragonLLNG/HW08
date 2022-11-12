@@ -87,7 +87,11 @@ public class ChatFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        getActivity().setTitle("Chat "+mRoomchat.userNames.get(1));
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user.getDisplayName().equals(mRoomchat.userNames.get(0))) {
+            getActivity().setTitle("Chat " + mRoomchat.userNames.get(1));
+        }
+        else { getActivity().setTitle("Chat " + mRoomchat.userNames.get(0));}
 
 
 
@@ -264,6 +268,35 @@ public class ChatFragment extends Fragment {
                                     @Override
                                     public void onSuccess(Void unused) {
                                         messageArrayList.remove(message);
+                                        if(messageArrayList.size()==0){
+                                            db.collection("RoomChat")
+                                                    .document(mRoomchat.roomId)
+                                                    .delete()
+                                                    .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                                        @Override
+                                                        public void onSuccess(Void unused) {
+                                                            mListener.goBackMyChats();
+                                                            Log.d("Message", "onSuccess: Message conversation successfully deleted");
+                                                        }
+                                                    })
+                                                    .addOnFailureListener(new OnFailureListener() {
+                                                        @Override
+                                                        public void onFailure(@NonNull Exception e) {
+                                                            Log.d("Message", "onFailure: Error deleting message conversation" + e);
+                                                        }
+                                                    });
+                                        }
+                                        else{
+                                            FirebaseFirestore.getInstance().collection("RoomChat").document(mRoomchat.roomId)
+                                                    .update("message", messageArrayList.get(messageArrayList.size()-1)).addOnCompleteListener(new OnCompleteListener<Void>() {
+                                                        @Override
+                                                        public void onComplete(@NonNull Task<Void> task) {
+
+                                                        }
+                                                    });
+
+
+                                        }
                                         Log.d("Message", "onSuccess: Message successfully deleted");
 
 
@@ -275,8 +308,6 @@ public class ChatFragment extends Fragment {
                                         Log.d("Message", "onFailure: Error deleting message" + e);
                                     }
                                 });
-
-
 
 
                     }
