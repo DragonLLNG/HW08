@@ -1,8 +1,9 @@
 package edu.uncc.hw08;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
-public class Roomchat {
+public class Roomchat implements Serializable {
 
     public ArrayList<String> userIds = new ArrayList<>();
     public ArrayList<String> userNames = new ArrayList<>();

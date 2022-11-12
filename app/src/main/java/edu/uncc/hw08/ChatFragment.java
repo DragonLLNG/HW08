@@ -42,7 +42,8 @@ public class ChatFragment extends Fragment {
 
     ArrayList<Message> messageArrayList = new ArrayList<>();
     ChatFragmentRecyclerViewAdapter adapter;
-    Message message, mMessage;
+    Message messageCreate = new Message();
+    Roomchat mRoomchat;
     LocalDateTime date;
     String name;
     String pattern = "MM/dd/yyyy HH:mma";
@@ -50,17 +51,17 @@ public class ChatFragment extends Fragment {
 
 
 
-    private static final String ARG_PARAM_MESSAGE = "param_message";
+    private static final String ARG_PARAM_ROOM_CHAT = "param_room_chat";
 
     public ChatFragment() {
         // Required empty public constructor
     }
 
 
-    public static ChatFragment newInstance(Message data) {
+    public static ChatFragment newInstance(Roomchat data) {
         ChatFragment fragment = new ChatFragment();
         Bundle args = new Bundle();
-        args.putSerializable(ARG_PARAM_MESSAGE, data);
+        args.putSerializable(ARG_PARAM_ROOM_CHAT, data);
         fragment.setArguments(args);
         return fragment;
     }
@@ -69,7 +70,7 @@ public class ChatFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
-            mMessage = (Message) getArguments().getSerializable(ARG_PARAM_MESSAGE);
+            mRoomchat = (Roomchat) getArguments().getSerializable(ARG_PARAM_ROOM_CHAT);
         }
     }
 
@@ -86,7 +87,8 @@ public class ChatFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        Log.d("Send", "onViewCreated: " + mMessage.receiver);
+        getActivity().setTitle("Chat "+mRoomchat.userNames.get(1));
+
 
 
         //Close button
@@ -106,14 +108,13 @@ public class ChatFragment extends Fragment {
                 FirebaseFirestore db = FirebaseFirestore.getInstance();
                 FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
 
-                db.collection("Users")
-                        .document(user.getUid())
-                        .collection("Message List")
-                        .document()
+                db.collection("RoomChat")
+                        .document(mRoomchat.roomId)
                         .delete()
                         .addOnSuccessListener(new OnSuccessListener<Void>() {
                             @Override
                             public void onSuccess(Void unused) {
+                                mListener.goBackMyChats();
                                 Log.d("Message", "onSuccess: Message conversation successfully deleted");
                             }
                         })
@@ -135,22 +136,22 @@ public class ChatFragment extends Fragment {
                 binding.editTextMessage.getText().toString();
 
                 FirebaseFirestore db = FirebaseFirestore.getInstance();
-                FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
-                DocumentReference docRef = db.collection("Users").document(firebaseUser.getUid()).
-                        collection("Message List").document();
+                DocumentReference docRef = db.collection("RoomChat")
+                        .document(mRoomchat.roomId).collection("Message").document();
 
-                message = new Message();
-                message.setMessageID(docRef.getId());
-                message.setCreatorID(FirebaseAuth.getInstance().getCurrentUser().getUid());
-                message.setMessage(binding.editTextMessage.getText().toString());
+                messageCreate.setMessageID(docRef.getId());
+                messageCreate.setCreatorID(FirebaseAuth.getInstance().getCurrentUser().getUid());
+                messageCreate.setMessage(binding.editTextMessage.getText().toString());
                 date = LocalDateTime.now();
-                message.setDate(dateTime.format(date));
-                message.setCreator( firebaseUser.getDisplayName());
-                //message.setReceiver(name);
-                docRef.set(message).addOnCompleteListener(new OnCompleteListener<Void>() {
+                messageCreate.setDate(dateTime.format(date));
+                messageCreate.setCreator(FirebaseAuth.getInstance().getCurrentUser().getDisplayName());
+                messageCreate.setReceiverID(mRoomchat.userIds.get(1));
+                messageCreate.setReceiver(mRoomchat.userNames.get(1));
+                docRef.set(messageCreate).addOnCompleteListener(new OnCompleteListener<Void>() {
                     @Override
                     public void onComplete(@NonNull Task<Void> task) {
                         if(task.isSuccessful()){
+
                             adapter.notifyDataSetChanged();
                         } else {
                         }
@@ -171,7 +172,7 @@ public class ChatFragment extends Fragment {
 
         //.orderBy("createdAt", descending: true).limit(1)
 
-        db.collection("RoomChat").document(user.getUid())
+        db.collection("RoomChat").document(mRoomchat.roomId)
                 .collection("Message")
                 .addSnapshotListener(new EventListener<QuerySnapshot>() {
                     @Override
@@ -180,8 +181,7 @@ public class ChatFragment extends Fragment {
                         for(QueryDocumentSnapshot messageDoc : value) {
                             Message message = messageDoc.toObject(Message.class);
 
-
-                                messageArrayList.add(message);
+                            messageArrayList.add(message);
                         }
                         adapter.notifyDataSetChanged();
                     }
@@ -214,12 +214,11 @@ public class ChatFragment extends Fragment {
             holder.textViewMsgText.setText(message.message);
             holder.textViewMsgOn.setText(message.date);
 
-
             if(user != null && message.creator.equals(user.getDisplayName())) {
                 holder.textViewMsgBy.setText("ME");
                 holder.trash.setVisibility(View.VISIBLE);
             } else {
-                holder.textViewMsgBy.setText(mMessage.creator);
+                holder.textViewMsgBy.setText(mRoomchat.message.creator);
                 holder.trash.setVisibility(View.INVISIBLE);
             }
 
@@ -253,14 +252,14 @@ public class ChatFragment extends Fragment {
                         FirebaseFirestore db = FirebaseFirestore.getInstance();
                         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
 
-                        db.collection("Users")
-                                .document(user.getUid())
-                                .collection("Message List")
+                        db.collection("RoomChat").document(mRoomchat.roomId)
+                                .collection("Message")
                                 .document(message.messageID)
                                 .delete()
                                 .addOnSuccessListener(new OnSuccessListener<Void>() {
                                     @Override
                                     public void onSuccess(Void unused) {
+                                        messageArrayList.remove(message);
                                         Log.d("Message", "onSuccess: Message successfully deleted");
                                     }
                                 })
@@ -270,6 +269,7 @@ public class ChatFragment extends Fragment {
                                         Log.d("Message", "onFailure: Error deleting message" + e);
                                     }
                                 });
+
 
                     }
                 });

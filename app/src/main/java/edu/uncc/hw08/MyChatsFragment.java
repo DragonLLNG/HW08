@@ -9,6 +9,7 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -35,6 +36,7 @@ public class MyChatsFragment extends Fragment {
 
 
     FragmentMyChatsBinding binding;
+    ArrayList<Roomchat> roomchatArrayList = new ArrayList<>();
     ArrayList<Message> messageArrayList = new ArrayList<>();
     MyChartsFragmentInterface mListener;
     MyChatsFragmentRecyclerAdapter adapter;
@@ -85,12 +87,15 @@ public class MyChatsFragment extends Fragment {
             }
         });
 
+
         //Display message list
+
         binding.recyclerView.setHasFixedSize(true);
         binding.recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        adapter = new MyChatsFragmentRecyclerAdapter(messageArrayList);
+        adapter = new MyChatsFragmentRecyclerAdapter(roomchatArrayList);
         binding.recyclerView.setAdapter(adapter);
         getMessage();
+
 
     }
 
@@ -98,27 +103,19 @@ public class MyChatsFragment extends Fragment {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
 
-        db.collection("RoomChat").whereArrayContains("userIDs",user.getUid());
-
-        db.collection("RoomChat").document(user.getUid())
-                .collection("Message")
-                .addSnapshotListener(new EventListener<QuerySnapshot>() {
-                    @Override
-                    public void onEvent(@Nullable QuerySnapshot value, @Nullable FirebaseFirestoreException error) {
-                        messageArrayList.clear();
-                        for(QueryDocumentSnapshot messageDoc : value) {
-                            Message message = messageDoc.toObject(Message.class);
-//                            if (message.creatorID.equals(user.getUid()) || message.receiverID.equals(user.getUid()))
-//                            {
-                                messageArrayList.add(message);
-                            //}
-                        }
-                        adapter.notifyDataSetChanged();
+        db.collection("RoomChat").addSnapshotListener(new EventListener<QuerySnapshot>() {
+            @Override
+            public void onEvent(@Nullable QuerySnapshot value, @Nullable FirebaseFirestoreException error) {
+                roomchatArrayList.clear();
+                for (QueryDocumentSnapshot roomChatDoc: value){
+                    Roomchat roomchat = roomChatDoc.toObject(Roomchat.class);
+                    roomchatArrayList.add(roomchat);
                 }
+                adapter.notifyDataSetChanged();
+
+            }
         });
 
-
-        //.orderBy("createdAt", descending: true).limit(1)
 
     }
 
@@ -126,9 +123,9 @@ public class MyChatsFragment extends Fragment {
 
     class MyChatsFragmentRecyclerAdapter extends RecyclerView.Adapter<MyChatsFragmentRecyclerAdapter.MessageViewHolder>{
 
-        ArrayList<Message> messages = new ArrayList<>();
-        public MyChatsFragmentRecyclerAdapter(ArrayList<Message> data){
-            this.messages = data;
+        ArrayList<Roomchat> roomchats = new ArrayList<>();
+        public MyChatsFragmentRecyclerAdapter(ArrayList<Roomchat> data){
+            this.roomchats = data;
         }
 
         @NonNull
@@ -144,22 +141,24 @@ public class MyChatsFragment extends Fragment {
 
         @Override
         public void onBindViewHolder(@NonNull MessageViewHolder holder, int position) {
-            Message message = messages.get(position);
-            holder.messageBy.setText(message.receiver);
-            holder.messageText.setText(message.message);
-            holder.messageOn.setText(message.date);
-            holder.message = message;
+            Roomchat roomchat = roomchats.get(position);
+
+            holder.messageBy.setText(roomchat.message.receiver);
+            holder.messageBy.setText(roomchat.message.creator);
+            holder.messageText.setText(roomchat.message.message);
+            holder.messageOn.setText(roomchat.message.date);
+            holder.roomchat = roomchat;
 
         }
 
         @Override
         public int getItemCount() {
-            return this.messages.size();
+            return this.roomchats.size();
         }
 
         public class MessageViewHolder extends RecyclerView.ViewHolder{
             TextView messageBy, messageText, messageOn;
-            Message message;
+            Roomchat roomchat;
 
 
             public MessageViewHolder(@NonNull View itemView) {
@@ -174,7 +173,7 @@ public class MyChatsFragment extends Fragment {
                 itemView.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        mListener.gotoChat(message);
+                        mListener.gotoChat(roomchat);
                     }
                 });
             }
@@ -192,6 +191,6 @@ public class MyChatsFragment extends Fragment {
         void gotoLogin();
         void createChat();
         void logout();
-        void gotoChat(Message message);
+        void gotoChat(Roomchat roomchat);
     }
 }

@@ -67,7 +67,6 @@ public class SignUpFragment extends Fragment {
                 String password = binding.editTextPassword.getText().toString();
                 String name = binding.editTextName.getText().toString();
 
-
                 if (email.isEmpty()) {
                     Toast.makeText(getContext(), "Email is required", Toast.LENGTH_SHORT).show();
                 } else if (password.isEmpty()) {
@@ -75,7 +74,6 @@ public class SignUpFragment extends Fragment {
                 } else if (name.isEmpty()) {
                     Toast.makeText(getContext(), "Name is required", Toast.LENGTH_SHORT).show();
                 } else {
-
 
                     mAuth.createUserWithEmailAndPassword(email, password).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
                         @Override

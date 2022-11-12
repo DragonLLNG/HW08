@@ -59,9 +59,9 @@ public class MainActivity extends AppCompatActivity implements MyChatsFragment.M
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
-    public void gotoChat(Message message) {
+    public void gotoChat(Roomchat roomchat) {
         getSupportFragmentManager().beginTransaction()
-                .replace(R.id.rootView, ChatFragment.newInstance(message))
+                .replace(R.id.rootView, ChatFragment.newInstance(roomchat))
                 .addToBackStack(null)
                 .commit();
 

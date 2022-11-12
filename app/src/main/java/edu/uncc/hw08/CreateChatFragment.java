@@ -113,17 +113,15 @@ public class CreateChatFragment extends Fragment {
             @Override
             public void onClick(View v) {
 
-
-
                 //Message content
                 binding.editTextMessage.getText().toString();
-
 
                 //Create room chat
                 FirebaseFirestore db = FirebaseFirestore.getInstance();
                 DocumentReference docRef = db.collection("RoomChat").document();
-                String roomId = docRef.getId();
-                roomchat.setRoomId(roomId);
+
+
+                roomchat.setRoomId(docRef.getId());
                 roomchat.userIds.add(FirebaseAuth.getInstance().getUid());
                 roomchat.userIds.add(id);
                 roomchat.userNames.add(FirebaseAuth.getInstance().getCurrentUser().getDisplayName());
@@ -133,43 +131,46 @@ public class CreateChatFragment extends Fragment {
                     @Override
                     public void onComplete(@NonNull Task<Void> task) {
                         if(task.isSuccessful()){
-                        } else {
-                        }
-                    }
-                });
+                            DocumentReference docRefMess = docRef
+                                    .collection("Message").document();
+                            message.setMessageID(docRefMess.getId());
+                            message.setCreatorID(FirebaseAuth.getInstance().getCurrentUser().getUid());
+                            message.setMessage(binding.editTextMessage.getText().toString());
+                            date = LocalDateTime.now();
+                            message.setDate(dateTime.format(date));
+                            message.setCreator(FirebaseAuth.getInstance().getCurrentUser().getDisplayName());
+                            message.setReceiver(name);
+                            message.setReceiverID(id);
 
-                DocumentReference docRefMess = db.collection("RoomChat").document(roomId)
-                        .collection("Message").document();
-                message.setMessageID(docRefMess.getId());
-                message.setCreatorID(FirebaseAuth.getInstance().getCurrentUser().getUid());
-                message.setMessage(binding.editTextMessage.getText().toString());
-                date = LocalDateTime.now();
-                message.setDate(dateTime.format(date));
-                message.setCreator(FirebaseAuth.getInstance().getCurrentUser().getDisplayName());
-                message.setReceiver(name);
-                message.setReceiverID(id);
 
-                docRefMess.set(message).addOnCompleteListener(new OnCompleteListener<Void>() {
-                    @Override
-                    public void onComplete(@NonNull Task<Void> task) {
-                        if(task.isSuccessful()){
+                            docRefMess.set(message).addOnCompleteListener(new OnCompleteListener<Void>() {
+                                @Override
+                                public void onComplete(@NonNull Task<Void> task) {
+                                    if(task.isSuccessful()){
+
+                                        Log.d("check", "onComplete: "+ messageList);
+                                        mListener.goBackMyChats();
+
+                                    } else {
+
+                                    }
+                                }
+                            });
                             messageList.add(message);
                             FirebaseFirestore.getInstance().collection("RoomChat").document(roomchat.roomId)
-                                    .update("message", messageList.get(messageList.size()-1)).addOnCompleteListener(new OnCompleteListener<Void>() {
+                                    .update("message", message).addOnCompleteListener(new OnCompleteListener<Void>() {
                                         @Override
                                         public void onComplete(@NonNull Task<Void> task) {
 
                                         }
                                     });
 
-                            Log.d("check", "onComplete: "+ messageList);
-                            mListener.goBackMyChats();
-
                         } else {
-
                         }
                     }
                 });
+
+
 
 
 
@@ -273,7 +274,6 @@ public class CreateChatFragment extends Fragment {
 
     interface CreateChatListener{
         void goBackMyChats();
-
     }
 
     @Override
