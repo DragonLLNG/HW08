@@ -117,11 +117,12 @@ public class CreateChatFragment extends Fragment {
                 binding.editTextMessage.getText().toString();
 
                 //Create room chat
+                String combineId = FirebaseAuth.getInstance().getUid()+id;
                 FirebaseFirestore db = FirebaseFirestore.getInstance();
-                DocumentReference docRef = db.collection("RoomChat").document();
+                DocumentReference docRef = db.collection("RoomChat").document(combineId);
 
 
-                roomchat.setRoomId(docRef.getId());
+                roomchat.setRoomId(FirebaseAuth.getInstance().getUid()+id);
                 roomchat.userIds.add(FirebaseAuth.getInstance().getUid());
                 roomchat.userIds.add(id);
                 roomchat.userNames.add(FirebaseAuth.getInstance().getCurrentUser().getDisplayName());

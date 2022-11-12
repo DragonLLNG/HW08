@@ -108,8 +108,10 @@ public class MyChatsFragment extends Fragment {
             public void onEvent(@Nullable QuerySnapshot value, @Nullable FirebaseFirestoreException error) {
                 roomchatArrayList.clear();
                 for (QueryDocumentSnapshot roomChatDoc: value){
-                    Roomchat roomchat = roomChatDoc.toObject(Roomchat.class);
-                    roomchatArrayList.add(roomchat);
+                    if(roomChatDoc.getId().contains(user.getUid())) {
+                        Roomchat roomchat = roomChatDoc.toObject(Roomchat.class);
+                        roomchatArrayList.add(roomchat);
+                    }
                 }
                 adapter.notifyDataSetChanged();
 
@@ -142,7 +144,7 @@ public class MyChatsFragment extends Fragment {
         @Override
         public void onBindViewHolder(@NonNull MessageViewHolder holder, int position) {
             Roomchat roomchat = roomchats.get(position);
-
+            Log.d("test", "onBindViewHolder: "+ roomchat.message);
             holder.messageBy.setText(roomchat.message.receiver);
             holder.messageBy.setText(roomchat.message.creator);
             holder.messageText.setText(roomchat.message.message);

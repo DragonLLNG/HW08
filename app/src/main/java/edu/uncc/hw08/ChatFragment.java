@@ -151,8 +151,14 @@ public class ChatFragment extends Fragment {
                     @Override
                     public void onComplete(@NonNull Task<Void> task) {
                         if(task.isSuccessful()){
-
                             adapter.notifyDataSetChanged();
+                            FirebaseFirestore.getInstance().collection("RoomChat").document(mRoomchat.roomId)
+                                    .update("message", messageCreate).addOnCompleteListener(new OnCompleteListener<Void>() {
+                                        @Override
+                                        public void onComplete(@NonNull Task<Void> task) {
+
+                                        }
+                                    });
                         } else {
                         }
                     }
@@ -168,8 +174,6 @@ public class ChatFragment extends Fragment {
         binding.recyclerView.setAdapter(adapter);
 
         FirebaseFirestore db = FirebaseFirestore.getInstance();
-        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-
         //.orderBy("createdAt", descending: true).limit(1)
 
         db.collection("RoomChat").document(mRoomchat.roomId)
@@ -261,6 +265,8 @@ public class ChatFragment extends Fragment {
                                     public void onSuccess(Void unused) {
                                         messageArrayList.remove(message);
                                         Log.d("Message", "onSuccess: Message successfully deleted");
+
+
                                     }
                                 })
                                 .addOnFailureListener(new OnFailureListener() {
@@ -269,6 +275,8 @@ public class ChatFragment extends Fragment {
                                         Log.d("Message", "onFailure: Error deleting message" + e);
                                     }
                                 });
+
+
 
 
                     }
