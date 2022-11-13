@@ -91,9 +91,6 @@ public class MyChatsFragment extends Fragment {
         adapter = new MyChatsFragmentRecyclerAdapter(roomchatArrayList);
         binding.recyclerView.setAdapter(adapter);
         getMessage();
-        Log.d("sorted list", "onViewCreated: "+roomchatArrayList.size());
-        //Log.d("sorted list", "onViewCreated: "+roomchatArrayList.get(roomchatArrayList.size()-1).message.createdAt);
-
 
 
 
@@ -118,7 +115,8 @@ public class MyChatsFragment extends Fragment {
 
                 }
 
-                if(roomchatArrayList.size()>=2) {
+                //Sorted room chat
+                if(roomchatArrayList.size()>1) {
                     Collections.sort(roomchatArrayList, new Comparator<Roomchat>() {
                         @Override
                         public int compare(Roomchat r1, Roomchat r2) {

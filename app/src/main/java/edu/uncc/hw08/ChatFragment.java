@@ -142,36 +142,41 @@ public class ChatFragment extends Fragment {
         binding.buttonSubmit.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                binding.editTextMessage.getText().toString();
+                String messageInput = binding.editTextMessage.getText().toString();
+                if (messageInput.isEmpty()) {
+                    Toast.makeText(getActivity(), "Enter a valid message!!", Toast.LENGTH_SHORT).show();
+                } else {
 
-                FirebaseFirestore db = FirebaseFirestore.getInstance();
-                DocumentReference docRef = db.collection("RoomChat")
-                        .document(mRoomchat.roomId).collection("Message").document();
 
-                messageCreate.setMessageID(docRef.getId());
-                messageCreate.setCreatorID(FirebaseAuth.getInstance().getCurrentUser().getUid());
-                messageCreate.setMessage(binding.editTextMessage.getText().toString());
-                date = LocalDateTime.now();
-                messageCreate.setDate(dateTime.format(date));
-                messageCreate.setCreator(FirebaseAuth.getInstance().getCurrentUser().getDisplayName());
-                messageCreate.setReceiverID(mRoomchat.userIds.get(1));
-                messageCreate.setReceiver(mRoomchat.userNames.get(1));
-                messageCreate.setCreatedAt(new Date());
-                docRef.set(messageCreate).addOnCompleteListener(new OnCompleteListener<Void>() {
-                    @Override
-                    public void onComplete(@NonNull Task<Void> task) {
-                        if(task.isSuccessful()){
-                            adapter.notifyDataSetChanged();
-                            FirebaseFirestore.getInstance().collection("RoomChat").document(mRoomchat.roomId)
-                                    .update("message", messageCreate).addOnCompleteListener(new OnCompleteListener<Void>() {
-                                        @Override
-                                        public void onComplete(@NonNull Task<Void> task) {
-                                        }
-                                    });
-                        } else {
+                    FirebaseFirestore db = FirebaseFirestore.getInstance();
+                    DocumentReference docRef = db.collection("RoomChat")
+                            .document(mRoomchat.roomId).collection("Message").document();
+
+                    messageCreate.setMessageID(docRef.getId());
+                    messageCreate.setCreatorID(FirebaseAuth.getInstance().getCurrentUser().getUid());
+                    messageCreate.setMessage(binding.editTextMessage.getText().toString());
+                    date = LocalDateTime.now();
+                    messageCreate.setDate(dateTime.format(date));
+                    messageCreate.setCreator(FirebaseAuth.getInstance().getCurrentUser().getDisplayName());
+                    messageCreate.setReceiverID(mRoomchat.userIds.get(1));
+                    messageCreate.setReceiver(mRoomchat.userNames.get(1));
+                    messageCreate.setCreatedAt(new Date());
+                    docRef.set(messageCreate).addOnCompleteListener(new OnCompleteListener<Void>() {
+                        @Override
+                        public void onComplete(@NonNull Task<Void> task) {
+                            if (task.isSuccessful()) {
+                                adapter.notifyDataSetChanged();
+                                FirebaseFirestore.getInstance().collection("RoomChat").document(mRoomchat.roomId)
+                                        .update("message", messageCreate).addOnCompleteListener(new OnCompleteListener<Void>() {
+                                            @Override
+                                            public void onComplete(@NonNull Task<Void> task) {
+                                            }
+                                        });
+                            } else {
+                            }
                         }
-                    }
-                });
+                    });
+                }
             }
         });
 

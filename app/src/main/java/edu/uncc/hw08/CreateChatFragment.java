@@ -17,6 +17,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -110,18 +111,19 @@ public class CreateChatFragment extends Fragment {
         binding.buttonSubmit.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                if (binding.editTextMessage.getText().toString().isEmpty() || name == null) {
+                    Toast.makeText(getActivity(), "All fields are required!!!!", Toast.LENGTH_SHORT).show();
+                }
 
-                //Message content
-                //binding.editTextMessage.getText().toString();
-
+                else{
 
                 //Create room chat
-                String combineId = FirebaseAuth.getInstance().getUid()+id;
+                String combineId = FirebaseAuth.getInstance().getUid() + id;
                 FirebaseFirestore db = FirebaseFirestore.getInstance();
                 DocumentReference docRef = db.collection("RoomChat").document(combineId);
 
 
-                roomchat.setRoomId(FirebaseAuth.getInstance().getUid()+id);
+                roomchat.setRoomId(FirebaseAuth.getInstance().getUid() + id);
                 roomchat.userIds.add(FirebaseAuth.getInstance().getUid());
                 roomchat.userIds.add(id);
                 roomchat.userNames.add(FirebaseAuth.getInstance().getCurrentUser().getDisplayName());
@@ -131,7 +133,7 @@ public class CreateChatFragment extends Fragment {
                 docRef.set(roomchat).addOnCompleteListener(new OnCompleteListener<Void>() {
                     @Override
                     public void onComplete(@NonNull Task<Void> task) {
-                        if(task.isSuccessful()){
+                        if (task.isSuccessful()) {
                             roomchatArrayList.add(roomchat);
 
                         } else {
@@ -156,8 +158,8 @@ public class CreateChatFragment extends Fragment {
                 docRefMess.set(message).addOnCompleteListener(new OnCompleteListener<Void>() {
                     @Override
                     public void onComplete(@NonNull Task<Void> task) {
-                        if(task.isSuccessful()){
-                            Log.d("check", "onComplete: "+ messageList);
+                        if (task.isSuccessful()) {
+                            Log.d("check", "onComplete: " + messageList);
                             messageList.add(message);
                             mListener.goBackMyChats();
 
@@ -176,7 +178,9 @@ public class CreateChatFragment extends Fragment {
                         });
 
             }
+        }
         });
+
 
 
 
