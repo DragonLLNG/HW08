@@ -126,6 +126,7 @@ public class CreateChatFragment extends Fragment {
                 roomchat.userIds.add(id);
                 roomchat.userNames.add(FirebaseAuth.getInstance().getCurrentUser().getDisplayName());
                 roomchat.userNames.add(name);
+                roomchat.setTime(new Date());
 
                 docRef.set(roomchat).addOnCompleteListener(new OnCompleteListener<Void>() {
                     @Override
@@ -157,6 +158,7 @@ public class CreateChatFragment extends Fragment {
                     public void onComplete(@NonNull Task<Void> task) {
                         if(task.isSuccessful()){
                             Log.d("check", "onComplete: "+ messageList);
+                            messageList.add(message);
                             mListener.goBackMyChats();
 
                         } else {
@@ -164,7 +166,7 @@ public class CreateChatFragment extends Fragment {
                         }
                     }
                 });
-                messageList.add(message);
+
                 FirebaseFirestore.getInstance().collection("RoomChat").document(roomchat.roomId)
                         .update("message", message).addOnCompleteListener(new OnCompleteListener<Void>() {
                             @Override

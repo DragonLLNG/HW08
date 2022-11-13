@@ -166,7 +166,6 @@ public class ChatFragment extends Fragment {
                                     .update("message", messageCreate).addOnCompleteListener(new OnCompleteListener<Void>() {
                                         @Override
                                         public void onComplete(@NonNull Task<Void> task) {
-
                                         }
                                     });
                         } else {
@@ -212,7 +211,6 @@ public class ChatFragment extends Fragment {
                             });
                             adapter.notifyDataSetChanged();
                         }
-
                         adapter.notifyDataSetChanged();
                     }
                 });
@@ -239,7 +237,6 @@ public class ChatFragment extends Fragment {
             Message message = messageArrayList.get(position);
             holder.textViewMsgText.setText(message.message);
             holder.textViewMsgOn.setText(message.date);
-            //holder.textViewMsgBy.setText(mRoomchat.userNames.get(0));
 
             if(user != null && message.creator.equals(user.getDisplayName())) {
                 holder.textViewMsgBy.setText("ME");
@@ -248,6 +245,75 @@ public class ChatFragment extends Fragment {
                 holder.textViewMsgBy.setText(message.creator);
                 holder.trash.setVisibility(View.INVISIBLE);
             }
+
+
+            holder.trash.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+
+                    FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+                    AlertDialog.Builder alertBuilder = new AlertDialog.Builder(getContext());
+                    alertBuilder.setTitle("Delete entry")
+                            .setMessage("Are you sure you want to delete?")
+                            .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialogInterface, int i) {
+                                    Log.d("alert", "onClick: ");
+                                    db.collection("RoomChat").document(mRoomchat.roomId)
+                                            .collection("Message")
+                                            .document(message.messageID)
+                                            .delete()
+                                            .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                                @Override
+                                                public void onSuccess(Void unused) {
+                                                    messageArrayList.remove(message);
+                                                    adapter.notifyDataSetChanged();
+
+                                                        if(messageArrayList.size()==0){
+                                                            db.collection("RoomChat")
+                                                                    .document(mRoomchat.roomId)
+                                                                    .delete()
+                                                                    .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                                                        @Override
+                                                                        public void onSuccess(Void unused) {
+                                                                            mListener.goBackMyChats();
+                                                                            Log.d("Message", "onSuccess: Message conversation successfully deleted");
+                                                                        }
+                                                                    })
+                                                                    .addOnFailureListener(new OnFailureListener() {
+                                                                        @Override
+                                                                        public void onFailure(@NonNull Exception e) {
+                                                                            Toast.makeText(getContext(), "Error deleting message" + e, Toast.LENGTH_SHORT).show();
+                                                                        }
+                                                                    });
+                                                        }
+                                                        else{
+                                                            FirebaseFirestore.getInstance().collection("RoomChat").document(mRoomchat.roomId)
+                                                                    .update("message", messageArrayList.get(messageArrayList.size()-1)).addOnCompleteListener(new OnCompleteListener<Void>() {
+                                                                        @Override
+                                                                        public void onComplete(@NonNull Task<Void> task) {
+
+                                                                        }
+                                                                    });
+                                                        }
+                                                    Log.d("Message", "onSuccess: Message successfully deleted");
+
+
+                                                }
+                                            })
+                                            .addOnFailureListener(new OnFailureListener() {
+                                                @Override
+                                                public void onFailure(@NonNull Exception e) {
+                                                    Toast.makeText(getContext(), "Error deleting message" + e, Toast.LENGTH_SHORT).show();
+                                                }
+                                            });
+                                }
+                            });
+                    alertBuilder.create().show();
+
+                }
+            });
 
 
             holder.message = message;
@@ -271,85 +337,6 @@ public class ChatFragment extends Fragment {
                 textViewMsgText = itemView.findViewById(R.id.textViewMsgText);
                 textViewMsgOn = itemView.findViewById(R.id.textViewMsgOn);
                 trash = itemView.findViewById(R.id.imageViewDelete);
-
-                trash.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-
-                        FirebaseFirestore db = FirebaseFirestore.getInstance();
-
-                        AlertDialog.Builder alertBuilder = new AlertDialog.Builder(getContext());
-                        alertBuilder.setTitle("Delete entry")
-                                .setMessage("Are you sure you want to delete?")
-                                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialogInterface, int i) {
-                                        Log.d("alert", "onClick: ");
-                                        db.collection("RoomChat").document(mRoomchat.roomId)
-                                                .collection("Message")
-                                                .document(message.messageID)
-                                                .delete()
-                                                .addOnSuccessListener(new OnSuccessListener<Void>() {
-                                                    @Override
-                                                    public void onSuccess(Void unused) {
-                                                        messageArrayList.remove(message);
-                                                        adapter.notifyDataSetChanged();
-
-
-
-
-
-
-
-
-//                                                        if(messageArrayList.size()==0){
-//                                                            db.collection("RoomChat")
-//                                                                    .document(mRoomchat.roomId)
-//                                                                    .delete()
-//                                                                    .addOnSuccessListener(new OnSuccessListener<Void>() {
-//                                                                        @Override
-//                                                                        public void onSuccess(Void unused) {
-//                                                                            mListener.goBackMyChats();
-//                                                                            Log.d("Message", "onSuccess: Message conversation successfully deleted");
-//                                                                        }
-//                                                                    })
-//                                                                    .addOnFailureListener(new OnFailureListener() {
-//                                                                        @Override
-//                                                                        public void onFailure(@NonNull Exception e) {
-//                                                                            Toast.makeText(getContext(), "Error deleting message" + e, Toast.LENGTH_SHORT).show();
-//                                                                        }
-//                                                                    });
-//                                                        }
-//                                                        else{
-//                                                            FirebaseFirestore.getInstance().collection("RoomChat").document(mRoomchat.roomId)
-//                                                                    .update("message", messageArrayList.get(messageArrayList.size()-1)).addOnCompleteListener(new OnCompleteListener<Void>() {
-//                                                                        @Override
-//                                                                        public void onComplete(@NonNull Task<Void> task) {
-//
-//                                                                        }
-//                                                                    });
-//
-//
-//                                                        }
-                                                        Log.d("Message", "onSuccess: Message successfully deleted");
-
-
-                                                    }
-                                                })
-                                                .addOnFailureListener(new OnFailureListener() {
-                                                    @Override
-                                                    public void onFailure(@NonNull Exception e) {
-                                                        Toast.makeText(getContext(), "Error deleting message" + e, Toast.LENGTH_SHORT).show();
-                                                    }
-                                                });
-                                    }
-                                });
-                        alertBuilder.create().show();
-
-                    }
-                });
-
-
             }
         }
 

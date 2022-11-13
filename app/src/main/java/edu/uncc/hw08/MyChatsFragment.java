@@ -41,7 +41,7 @@ public class MyChatsFragment extends Fragment {
 
     FragmentMyChatsBinding binding;
     ArrayList<Roomchat> roomchatArrayList = new ArrayList<>();
-    ArrayList<Message> messageArrayList = new ArrayList<>();
+    ArrayList<Message> lastMessageArrayList = new ArrayList<>();
     MyChartsFragmentInterface mListener;
     MyChatsFragmentRecyclerAdapter adapter;
 
@@ -91,6 +91,8 @@ public class MyChatsFragment extends Fragment {
         adapter = new MyChatsFragmentRecyclerAdapter(roomchatArrayList);
         binding.recyclerView.setAdapter(adapter);
         getMessage();
+        Log.d("sorted list", "onViewCreated: "+roomchatArrayList.size());
+        //Log.d("sorted list", "onViewCreated: "+roomchatArrayList.get(roomchatArrayList.size()-1).message.createdAt);
 
 
 
@@ -104,14 +106,29 @@ public class MyChatsFragment extends Fragment {
         db.collection("RoomChat").addSnapshotListener(new EventListener<QuerySnapshot>() {
             @Override
             public void onEvent(@Nullable QuerySnapshot value, @Nullable FirebaseFirestoreException error) {
+                lastMessageArrayList.clear();
                 roomchatArrayList.clear();
                 for (QueryDocumentSnapshot roomChatDoc: value){
                     if(roomChatDoc.getId().contains(user.getUid())) {
                         Roomchat roomchat = roomChatDoc.toObject(Roomchat.class);
                         roomchatArrayList.add(roomchat);
+                        lastMessageArrayList.add(roomchat.message);
                         adapter.notifyDataSetChanged();
                     }
+
                 }
+
+                if(roomchatArrayList.size()>=2) {
+                    Collections.sort(roomchatArrayList, new Comparator<Roomchat>() {
+                        @Override
+                        public int compare(Roomchat r1, Roomchat r2) {
+                            return (-1)*r1.time.compareTo(r2.time);
+                        }
+                    });
+                    adapter.notifyDataSetChanged();
+                }
+                adapter.notifyDataSetChanged();
+
 
             }
         });
