@@ -1,13 +1,18 @@
 package edu.uncc.hw08;
 
+import com.google.firebase.firestore.FieldValue;
+
 import java.io.Serializable;
+import java.security.Timestamp;
+import java.util.Date;
 
 public class Message implements Serializable {
     String creator, creatorID, message, messageID, date, receiver, receiverID;
+    public Date createdAt;
     public Message(){
     }
 
-    public Message(String creator, String creatorID, String message, String messageID, String date, String receiver, String receiverID) {
+    public Message(String creator, String creatorID, String message, String messageID, String date, String receiver, String receiverID, Date createdAt) {
         this.creator = creator;
         this.creatorID = creatorID;
         this.message = message;
@@ -15,6 +20,7 @@ public class Message implements Serializable {
         this.date = date;
         this.receiver = receiver;
         this.receiverID = receiverID;
+        this.createdAt = createdAt;
     }
 
     public String getCreator() {
@@ -72,5 +78,13 @@ public class Message implements Serializable {
 
     public void setReceiverID(String receiverID) {
         this.receiverID = receiverID;
+    }
+
+    public Date getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Date createdAt) {
+        this.createdAt = createdAt;
     }
 }

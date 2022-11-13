@@ -1,12 +1,14 @@
 package edu.uncc.hw08;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.os.Build;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -17,6 +19,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -34,6 +37,9 @@ import com.google.firebase.firestore.QuerySnapshot;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
 
 import edu.uncc.hw08.databinding.FragmentChatBinding;
 
@@ -45,10 +51,8 @@ public class ChatFragment extends Fragment {
     Message messageCreate = new Message();
     Roomchat mRoomchat;
     LocalDateTime date;
-    String name;
     String pattern = "MM/dd/yyyy HH:mma";
     DateTimeFormatter dateTime = DateTimeFormatter.ofPattern(pattern);
-
 
 
     private static final String ARG_PARAM_ROOM_CHAT = "param_room_chat";
@@ -88,6 +92,8 @@ public class ChatFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+
+
         if (user.getDisplayName().equals(mRoomchat.userNames.get(0))) {
             getActivity().setTitle("Chat " + mRoomchat.userNames.get(1));
         }
@@ -110,7 +116,6 @@ public class ChatFragment extends Fragment {
             public void onClick(View v) {
 
                 FirebaseFirestore db = FirebaseFirestore.getInstance();
-                FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
 
                 db.collection("RoomChat")
                         .document(mRoomchat.roomId)
@@ -125,7 +130,7 @@ public class ChatFragment extends Fragment {
                         .addOnFailureListener(new OnFailureListener() {
                             @Override
                             public void onFailure(@NonNull Exception e) {
-                                Log.d("Message", "onFailure: Error deleting message conversation" + e);
+                                Toast.makeText(getContext(), "Error deleting message conversation" + e, Toast.LENGTH_SHORT).show();
                             }
                         });
 
@@ -151,6 +156,7 @@ public class ChatFragment extends Fragment {
                 messageCreate.setCreator(FirebaseAuth.getInstance().getCurrentUser().getDisplayName());
                 messageCreate.setReceiverID(mRoomchat.userIds.get(1));
                 messageCreate.setReceiver(mRoomchat.userNames.get(1));
+                messageCreate.setCreatedAt(new Date());
                 docRef.set(messageCreate).addOnCompleteListener(new OnCompleteListener<Void>() {
                     @Override
                     public void onComplete(@NonNull Task<Void> task) {
@@ -176,9 +182,14 @@ public class ChatFragment extends Fragment {
         binding.recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         adapter = new ChatFragmentRecyclerViewAdapter(messageArrayList);
         binding.recyclerView.setAdapter(adapter);
+        getMessage();
 
+
+
+    }
+
+    public void getMessage(){
         FirebaseFirestore db = FirebaseFirestore.getInstance();
-        //.orderBy("createdAt", descending: true).limit(1)
 
         db.collection("RoomChat").document(mRoomchat.roomId)
                 .collection("Message")
@@ -188,15 +199,24 @@ public class ChatFragment extends Fragment {
                         messageArrayList.clear();
                         for(QueryDocumentSnapshot messageDoc : value) {
                             Message message = messageDoc.toObject(Message.class);
-
                             messageArrayList.add(message);
+                            adapter.notifyDataSetChanged();
                         }
+
+                        if(messageArrayList.size()>1) {
+                            Collections.sort(messageArrayList, new Comparator<Message>() {
+                                @Override
+                                public int compare(Message m1, Message m2) {
+                                    return m1.createdAt.compareTo(m2.createdAt);
+                                }
+                            });
+                            adapter.notifyDataSetChanged();
+                        }
+
                         adapter.notifyDataSetChanged();
                     }
                 });
-
     }
-
 
     class ChatFragmentRecyclerViewAdapter extends RecyclerView.Adapter<ChatFragmentRecyclerViewAdapter.ChatFragmentViewHolder>{
 
@@ -216,22 +236,21 @@ public class ChatFragment extends Fragment {
         @Override
         public void onBindViewHolder(@NonNull ChatFragmentViewHolder holder, int position) {
             FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-
             Message message = messageArrayList.get(position);
-
             holder.textViewMsgText.setText(message.message);
             holder.textViewMsgOn.setText(message.date);
+            //holder.textViewMsgBy.setText(mRoomchat.userNames.get(0));
 
             if(user != null && message.creator.equals(user.getDisplayName())) {
                 holder.textViewMsgBy.setText("ME");
                 holder.trash.setVisibility(View.VISIBLE);
             } else {
-                holder.textViewMsgBy.setText(mRoomchat.message.creator);
+                holder.textViewMsgBy.setText(message.creator);
                 holder.trash.setVisibility(View.INVISIBLE);
             }
 
-            holder.message = message;
 
+            holder.message = message;
 
 
         }
@@ -258,57 +277,74 @@ public class ChatFragment extends Fragment {
                     public void onClick(View v) {
 
                         FirebaseFirestore db = FirebaseFirestore.getInstance();
-                        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
 
-                        db.collection("RoomChat").document(mRoomchat.roomId)
-                                .collection("Message")
-                                .document(message.messageID)
-                                .delete()
-                                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                        AlertDialog.Builder alertBuilder = new AlertDialog.Builder(getContext());
+                        alertBuilder.setTitle("Delete entry")
+                                .setMessage("Are you sure you want to delete?")
+                                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
                                     @Override
-                                    public void onSuccess(Void unused) {
-                                        messageArrayList.remove(message);
-                                        if(messageArrayList.size()==0){
-                                            db.collection("RoomChat")
-                                                    .document(mRoomchat.roomId)
-                                                    .delete()
-                                                    .addOnSuccessListener(new OnSuccessListener<Void>() {
-                                                        @Override
-                                                        public void onSuccess(Void unused) {
-                                                            mListener.goBackMyChats();
-                                                            Log.d("Message", "onSuccess: Message conversation successfully deleted");
-                                                        }
-                                                    })
-                                                    .addOnFailureListener(new OnFailureListener() {
-                                                        @Override
-                                                        public void onFailure(@NonNull Exception e) {
-                                                            Log.d("Message", "onFailure: Error deleting message conversation" + e);
-                                                        }
-                                                    });
-                                        }
-                                        else{
-                                            FirebaseFirestore.getInstance().collection("RoomChat").document(mRoomchat.roomId)
-                                                    .update("message", messageArrayList.get(messageArrayList.size()-1)).addOnCompleteListener(new OnCompleteListener<Void>() {
-                                                        @Override
-                                                        public void onComplete(@NonNull Task<Void> task) {
-
-                                                        }
-                                                    });
+                                    public void onClick(DialogInterface dialogInterface, int i) {
+                                        Log.d("alert", "onClick: ");
+                                        db.collection("RoomChat").document(mRoomchat.roomId)
+                                                .collection("Message")
+                                                .document(message.messageID)
+                                                .delete()
+                                                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                                    @Override
+                                                    public void onSuccess(Void unused) {
+                                                        messageArrayList.remove(message);
+                                                        adapter.notifyDataSetChanged();
 
 
-                                        }
-                                        Log.d("Message", "onSuccess: Message successfully deleted");
 
 
-                                    }
-                                })
-                                .addOnFailureListener(new OnFailureListener() {
-                                    @Override
-                                    public void onFailure(@NonNull Exception e) {
-                                        Log.d("Message", "onFailure: Error deleting message" + e);
+
+
+
+
+//                                                        if(messageArrayList.size()==0){
+//                                                            db.collection("RoomChat")
+//                                                                    .document(mRoomchat.roomId)
+//                                                                    .delete()
+//                                                                    .addOnSuccessListener(new OnSuccessListener<Void>() {
+//                                                                        @Override
+//                                                                        public void onSuccess(Void unused) {
+//                                                                            mListener.goBackMyChats();
+//                                                                            Log.d("Message", "onSuccess: Message conversation successfully deleted");
+//                                                                        }
+//                                                                    })
+//                                                                    .addOnFailureListener(new OnFailureListener() {
+//                                                                        @Override
+//                                                                        public void onFailure(@NonNull Exception e) {
+//                                                                            Toast.makeText(getContext(), "Error deleting message" + e, Toast.LENGTH_SHORT).show();
+//                                                                        }
+//                                                                    });
+//                                                        }
+//                                                        else{
+//                                                            FirebaseFirestore.getInstance().collection("RoomChat").document(mRoomchat.roomId)
+//                                                                    .update("message", messageArrayList.get(messageArrayList.size()-1)).addOnCompleteListener(new OnCompleteListener<Void>() {
+//                                                                        @Override
+//                                                                        public void onComplete(@NonNull Task<Void> task) {
+//
+//                                                                        }
+//                                                                    });
+//
+//
+//                                                        }
+                                                        Log.d("Message", "onSuccess: Message successfully deleted");
+
+
+                                                    }
+                                                })
+                                                .addOnFailureListener(new OnFailureListener() {
+                                                    @Override
+                                                    public void onFailure(@NonNull Exception e) {
+                                                        Toast.makeText(getContext(), "Error deleting message" + e, Toast.LENGTH_SHORT).show();
+                                                    }
+                                                });
                                     }
                                 });
-
+                        alertBuilder.create().show();
 
                     }
                 });

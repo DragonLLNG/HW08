@@ -27,7 +27,11 @@ import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 
 import edu.uncc.hw08.databinding.FragmentMyChatsBinding;
 
@@ -70,15 +74,9 @@ public class MyChatsFragment extends Fragment {
         binding.buttonLogout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
                 mListener.logout();
-
-
             }
         });
-
-
-
         //Create new chat
         binding.buttonNewChat.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -87,14 +85,14 @@ public class MyChatsFragment extends Fragment {
             }
         });
 
-
         //Display message list
-
         binding.recyclerView.setHasFixedSize(true);
         binding.recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         adapter = new MyChatsFragmentRecyclerAdapter(roomchatArrayList);
         binding.recyclerView.setAdapter(adapter);
         getMessage();
+
+
 
 
     }
@@ -111,16 +109,13 @@ public class MyChatsFragment extends Fragment {
                     if(roomChatDoc.getId().contains(user.getUid())) {
                         Roomchat roomchat = roomChatDoc.toObject(Roomchat.class);
                         roomchatArrayList.add(roomchat);
+                        adapter.notifyDataSetChanged();
                     }
                 }
-                adapter.notifyDataSetChanged();
 
             }
         });
-
-
     }
-
 
 
     class MyChatsFragmentRecyclerAdapter extends RecyclerView.Adapter<MyChatsFragmentRecyclerAdapter.MessageViewHolder>{
@@ -145,17 +140,17 @@ public class MyChatsFragment extends Fragment {
         public void onBindViewHolder(@NonNull MessageViewHolder holder, int position) {
             Roomchat roomchat = roomchats.get(position);
             Log.d("test", "onBindViewHolder: "+ roomchat.message);
-
             FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
             if (user.getDisplayName().equals(roomchat.userNames.get(0))) {
-                holder.messageBy.setText(roomchat.message.receiver);
+                holder.messageBy.setText(roomchat.userNames.get(1));
             }
-            else { holder.messageBy.setText(roomchat.message.creator); }
+            else { holder.messageBy.setText(roomchat.userNames.get(0)); }
 
-
+            if(roomchat.message !=null) {
             holder.messageText.setText(roomchat.message.message);
             holder.messageOn.setText(roomchat.message.date);
             holder.roomchat = roomchat;
+            }
 
         }
 
@@ -187,8 +182,8 @@ public class MyChatsFragment extends Fragment {
             }
         }
 
-
     }
+
 
     @Override
     public void onAttach(@NonNull Context context) {

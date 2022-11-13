@@ -24,15 +24,18 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.EventListener;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 
+import java.security.Timestamp;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 
 import edu.uncc.hw08.databinding.FragmentCreateChatBinding;
 
@@ -41,6 +44,7 @@ public class CreateChatFragment extends Fragment {
 
     FragmentCreateChatBinding binding;
     CreateChatListener mListener;
+    ArrayList<Roomchat> roomchatArrayList = new ArrayList<>();
     ArrayList<Message> messageList = new ArrayList<>();
     Roomchat roomchat = new Roomchat();
     ArrayList<User> userList = new ArrayList<>();
@@ -56,9 +60,6 @@ public class CreateChatFragment extends Fragment {
 
 
     private static final String ARG_PARAM_USER = "param_user";
-//    private static final String ARG_PARAM2 = "param2";
-//    private String mParam1;
-//    private String mParam2;
 
     public CreateChatFragment() {
         // Required empty public constructor
@@ -94,9 +95,6 @@ public class CreateChatFragment extends Fragment {
         getActivity().setTitle("New Chat");
 
 
-        //Message
-        binding.editTextMessage.getText().toString();
-
         //Cancel
         binding.buttonCancel.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -114,7 +112,8 @@ public class CreateChatFragment extends Fragment {
             public void onClick(View v) {
 
                 //Message content
-                binding.editTextMessage.getText().toString();
+                //binding.editTextMessage.getText().toString();
+
 
                 //Create room chat
                 String combineId = FirebaseAuth.getInstance().getUid()+id;
@@ -132,39 +131,7 @@ public class CreateChatFragment extends Fragment {
                     @Override
                     public void onComplete(@NonNull Task<Void> task) {
                         if(task.isSuccessful()){
-                            DocumentReference docRefMess = docRef
-                                    .collection("Message").document();
-                            message.setMessageID(docRefMess.getId());
-                            message.setCreatorID(FirebaseAuth.getInstance().getCurrentUser().getUid());
-                            message.setMessage(binding.editTextMessage.getText().toString());
-                            date = LocalDateTime.now();
-                            message.setDate(dateTime.format(date));
-                            message.setCreator(FirebaseAuth.getInstance().getCurrentUser().getDisplayName());
-                            message.setReceiver(name);
-                            message.setReceiverID(id);
-
-
-                            docRefMess.set(message).addOnCompleteListener(new OnCompleteListener<Void>() {
-                                @Override
-                                public void onComplete(@NonNull Task<Void> task) {
-                                    if(task.isSuccessful()){
-
-                                        Log.d("check", "onComplete: "+ messageList);
-                                        mListener.goBackMyChats();
-
-                                    } else {
-
-                                    }
-                                }
-                            });
-                            messageList.add(message);
-                            FirebaseFirestore.getInstance().collection("RoomChat").document(roomchat.roomId)
-                                    .update("message", message).addOnCompleteListener(new OnCompleteListener<Void>() {
-                                        @Override
-                                        public void onComplete(@NonNull Task<Void> task) {
-
-                                        }
-                                    });
+                            roomchatArrayList.add(roomchat);
 
                         } else {
                         }
@@ -172,8 +139,39 @@ public class CreateChatFragment extends Fragment {
                 });
 
 
+                DocumentReference docRefMess = docRef
+                        .collection("Message").document();
+                message.setMessageID(docRefMess.getId());
+                message.setCreatorID(FirebaseAuth.getInstance().getCurrentUser().getUid());
+                message.setMessage(binding.editTextMessage.getText().toString());
+                date = LocalDateTime.now();
+                message.setDate(dateTime.format(date));
+                message.setCreator(FirebaseAuth.getInstance().getCurrentUser().getDisplayName());
+                message.setReceiver(name);
+                message.setReceiverID(id);
+                message.setCreatedAt(new Date());
 
 
+                docRefMess.set(message).addOnCompleteListener(new OnCompleteListener<Void>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Void> task) {
+                        if(task.isSuccessful()){
+                            Log.d("check", "onComplete: "+ messageList);
+                            mListener.goBackMyChats();
+
+                        } else {
+
+                        }
+                    }
+                });
+                messageList.add(message);
+                FirebaseFirestore.getInstance().collection("RoomChat").document(roomchat.roomId)
+                        .update("message", message).addOnCompleteListener(new OnCompleteListener<Void>() {
+                            @Override
+                            public void onComplete(@NonNull Task<Void> task) {
+
+                            }
+                        });
 
             }
         });
@@ -257,9 +255,7 @@ public class CreateChatFragment extends Fragment {
                     @Override
                     public void onClick(View v) {
                         Log.d("Click", "onClick: " + user.userName);
-
                         binding.textViewSelectedUser.setText(user.userName);
-
                         //Setting the receiver
                         name = user.userName;
                         id = user.userID;
